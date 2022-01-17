@@ -1,0 +1,29 @@
+---
+title: "Assignment 1: Task 1"
+author: "Sophia Leiker"
+date: "1/16/2022"
+output: html_document
+---
+
+```{r setup, include=TRUE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+## 1. Introduction
+
+This report will explore amphibian abundance data recorded by the Sierra Lakes Inventory Project. From the Environmental Data Initiative repository: “The Sierra Lakes Inventory Project (SLIP) was a research endeavor that ran from 1995-2002 and has supported research and management of Sierra Nevada aquatic ecosystems and their terrestrial interfaces. We described the physical characteristics of and surveyed aquatic communities for >8,000 lentic water bodies in the southern Sierra Nevada, including lakes, ponds, marshes, and meadows.”
+
+The data used comes from: [Sierra Amphibians Dataset](https://docs.google.com/spreadsheets/d/1Q2tQVhxMFf0ZlwdxLkc8ejmPdQHajPPp/edit?usp=sharing&ouid=103583206514695977373&rtpof=true&sd=true) and metadata, including methods used for data collection can be found here [The Sierra Lakes Inventory Project: Non-Native fish and community composition of lakes and ponds in the Sierra Nevada, California](https://portal.edirepository.org/nis/metadataviewer?packageid=edi.577.2).
+
+
+
+
+***
+
+## X. Data Citation
+
+Knapp, R.A., C. Pavelka, E.E. Hegeman, and T.C. Smith. 2020. The Sierra Lakes Inventory Project: Non-Native fish and community composition of lakes and ponds in the Sierra Nevada, California ver 2. Environmental Data Initiative. https://doi.org/10.6073/pasta/d835832d7fd00d9e4466e44eea87fab3
