@@ -30,7 +30,9 @@ sierra <- read_csv(here("data", "sierra_amphibians.csv")) %>%
 
 ***
 
-## 2. Data Wrangling 
+# Part 1
+
+## A. Data Wrangling 
 - Selecting Mountain yellow-legged frog (Rana muscosa) --> RAMU
 - Finding count each year across all water bodies by life stage
 - Exclude 'EggMass' level (find the total number of adult, subadult, and tadpole yellow-legged frogs observed in the entire study region by life stage and year)
@@ -47,17 +49,70 @@ sierra_yellow <- sierra %>%
   filter(amphibian_life_stage %in% c("SubAdult", "Tadpole", "Adult"))
 ```
 
-## 3. Data Analysis
+## B. Data Analysis
+- Grouping by life stage and survey date
 
 ```{r}
 sierra_count <- sierra_yellow %>% 
   group_by(amphibian_life_stage, survey_date) %>% 
   summarize(total_count = n())
 
-head(sierra_count)
+#head(sierra_count)
 
 ```
 
+## C. Data visualization
+- SOPHIA TRY AND RECOLOR THESE ULGY COLORS
+
+```{r}
+ggplot(data = sierra_count, aes(x=survey_date, y= total_count, fill= amphibian_life_stage)) +
+  geom_col() +
+  labs(x = "Year", y = "Total Count", title = "Amphibian Life Stage for Rana Muscosa in Sierra Lakes Inventory Project", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project") +
+  scale_color_manual(values = c("skyblue1","slateblue1","royalblue4")) +
+  facet_wrap(~ amphibian_life_stage) +
+  theme_minimal()
+```
+***
+
+# Part 2
+
+## A. Data Analysis
+- Total counts of combined adult and sub-adult frogs in the 5 lakes with greatest total counts
+- 5 columns with lake ID
+
+```{r}
+sierra_yellow2 <- sierra_yellow %>% 
+  filter(amphibian_life_stage %in% c("SubAdult", "Adult")) %>% 
+  group_by(lake_id) %>% 
+  summarize(total_count = n())
+
+sierra_top5 <- sierra_yellow2 %>% 
+  slice_max(total_count, n = 5) %>% #the 6th value is lower than the 5th, so there are no ties between the 5th/6th
+  arrange(desc(total_count)) %>% 
+  mutate(lake_id = as.character(lake_id))
+
+# Adding "Lake" to the beginning of all the lake names
+sierra_top5[1, "lake_id"] <- "Lake 50183"
+sierra_top5[2, "lake_id"] <- "Lake 70583"
+sierra_top5[3, "lake_id"] <- "Lake 10226"
+sierra_top5[4, "lake_id"] <- "Lake 41322"
+sierra_top5[5, "lake_id"] <- "Lake 50219"
+
+
+
+```
+
+## B. Data Visualization
+- SOPHIA SHORTEN TITLE
+- SOPHIA SEE HOW TO CHANGE THE COLORS
+```{r}
+ggplot(data = sierra_top5, aes(x= fct_reorder(lake_id, total_count), y = total_count)) + 
+  geom_col(aes(fill = lake_id)) + 
+  labs(x = 'Lake ID', y = 'Total Count') +
+  #coord_flip() + #flips so columns go from vertical alignment to horizontal alginment
+  theme_minimal() +
+  labs(x = "Total Count", y = "Lake ID", title = "Combined Adult and Subadult Rana Muscosa in Lakes with Top 5 Total Observed Counts", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project")
+```
 
 
 
