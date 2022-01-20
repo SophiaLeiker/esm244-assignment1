@@ -5,26 +5,201 @@ date: "1/19/2022"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=TRUE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+library(tidyverse)
+library(AICcmodavg)
+library(equatiomatic)
+library(janitor)
+library(here)
+library(kableExtra)
 ```
 
-## R Markdown
+## 1. Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This report will read in a small subset of seawater sample data from CalCOFI, then compare the performance of two competing linear regression models that predict oxygen saturation based on several physical and chemical variables, using AIC and cross validation.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The analysis will be used to explore the relationship between O2 saturation of seawater off California’s coast and several physical and chemical variables. From the CalCOFI site: “Since 1949, hydrographic and biological data of the California Current System have been collected on CalCOFI cruises. The 70+ year hydrographic time-series includes temperature, salinity, oxygen and phosphate observations. In 1961, nutrient analysis expanded to include silicate, nitrate and nitrite; in 1973, chlorophyll was added; in 1984, C14 primary productivity incubations were added; and in 1993, CTD profiling began.” ([CalCOFI](https://calcofi.org/ccdata.html))
 
-```{r cars}
-summary(cars)
+
+The data used comes from: [CalCOFI](https://calcofi.org/ccdata.html) and a subset of data, including *oxygen saturation*, *temperature of water*, *salinity of water*, *depth in meters*, *acetone extracted chlorophyll-a measured fluorometrically*, *phosphate concentration*, and *nitrate concentration* used for this analysis can be found [here](https://drive.google.com/file/d/1uXS6_enkcCmbIoawkFU8EXvLtomBP2r7/view?usp=sharing).
+
+
+
+```{r read in data}
+# Reading in the data
+samples <- read_csv(here("data", "calcofi_seawater_samples.csv")) %>% 
+  clean_names()
+
 ```
 
-## Including Plots
+***
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+## 1. Multiple Linear Regression Models
+Creating two multiple linear regression models:
+
+- Oxygen saturation as a function of water temperature, salinity, and phosphate concentration
+- Oxygen saturation as a function of water temp, salinity, phosphate concentration, and depth.
+
+```{r multiple linear regression}
+f1 <- o2sat ~ t_deg_c + salinity + po4u_m
+model1 <- lm(f1, data = samples)
+
+f2 <- o2sat ~ t_deg_c + salinity + po4u_m + depth_m
+model2 <- lm(f2, data = samples)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+***
+
+## 2. AIC Assessment (Akaike Information Criterion)
+- Using `AICc` to select the better model
+- Comparing difference in AICc between the two models
+- Lower AIC can indicate a better fit (more parsimonious)
+- Difference between values in AIC models must be greater than 2 to indicate one as a better fit than the other
+- AIC(A) - AIC(B) = ∆AIC --> must be greater than or equal to 2 if making statement that model B is better than model 1
+
+```{r AIC assessment}
+#Using AIC just to check
+AIC_model1 <- AIC(model1)
+AIC_model2 <- AIC(model2)
+
+#Using AICc to select model
+AICc_model1 <- AICcmodavg::AICc(model1)
+AICc_model2 <- AICcmodavg::AICc(model2)
+
+#this gives us a model summary and ranks them in order of preference
+table1 <- AICcmodavg::aictab(list(model1, model2))
+
+#Let's create a table
+kbl(table1, caption = "Table 1: Model 1 and Model 2 AIC Outputs") %>% 
+  kable_styling(c("striped"), full_width = FALSE)
+```
+**Model 1** had an AIC value of `r round(AICc_model1, 3)`
+
+**Model 2** had an AIC value of `r round(AICc_model2,3)`
+
+**Difference in AIC** between the two models is `r round(AICc_model1, 3) - round(AICc_model2,3)`, since this value is greater than 2, one can determine that Model 2 (Oxygen saturation as a function of water temp, salinity, phosphate concentration, and depth) is the better performing model. 
+
+
+***
+
+## 3. Ten-fold Cross Validation
+
+- Reserving a subset of data (test data) and train our model using the rest (training data) to estimate the model parameters. By holding out set of data one can carry out a cross validation
+- This can help avoid an overfitting problem
+
+```{r ten-fold cross validation}
+
+folds <- 10
+fold_vec <- rep(1:folds, length.out = nrow(samples))
+table(fold_vec)
+
+set.seed(42)
+
+#this is pulling apart the dataset so we can do a train test split
+samples_fold <- samples %>% 
+  mutate(group = sample(fold_vec, size = n(), replace = FALSE))
+
+### First fold
+test_df <- samples_fold %>% 
+  filter(group == 1)
+train_df <- samples_fold %>% 
+  filter(group !=1)
+
+```
+
+## 4. Using RMSE as Scoring Method
+
+### A. Creating Function for RMSE
+
+- Training dataset to create 2 linear regression models
+
+```{r rmse}
+#creating a function for RMSE
+calc_rmse <- function(x,y) {
+  rmse_result <- (x-y)^2 %>%  mean () %>%  sqrt()
+  return(rmse_result)
+}
+
+#training dataset to create 2 linear regression models
+
+training_mdl1 <- lm(f1, data = train_df)
+training_mdl2 <- lm(f2, data = train_df)
+
+```
+
+### B. Using trained model to predict on test model
+
+```{r}
+#this is adding columns for the oxygen output according to each of the models,
+#so in the predict_test output, there is 2 more columns, one for each model
+predict_test <- test_df %>% 
+  mutate(model1 = predict(training_mdl1, test_df),
+         model2 = predict(training_mdl2, test_df))
+
+rmse_predict_test <- predict_test %>% 
+  summarize(rmse_mdl1 = calc_rmse(model1, o2sat),
+            rmse_mdl2 = calc_rmse(model2, o2sat))
+
+#Let's create a table
+kbl(rmse_predict_test, caption = "Table 2: Model 1 and Model 2RMSE Value Outputs") %>% 
+  kable_styling(c("striped"), full_width = FALSE)
+
+```
+
+### C. Calculating over all the folds and taking the average
+
+## SOPHIA THINGS STOP WORKING HERE!!!!
+```{r rmse average, eval=FALSE}
+
+# Creating a blank data frame
+rmse_df <- data.frame()
+
+# Creating for loop 
+for(i in 1:folds) {
+  kfold_test_df <- samples_fold %>% 
+    filter(group == i)
+  kfold_train_df <- samples_fold %>% 
+    filter(group !=i)
+  
+  kfold_mdl1 <- lm(f1, data = kfold_train_df)
+  kfold_mdl2 <- lm(f2, data = kfold_train_df)
+  
+  kfold_pred_df <- kfold_test_df %>% 
+    mutate(mdl1 = predict(kfold_mdl1, kfold_test_df),
+           mdl2 = predict(kfold_mdl2, .))
+  kfold_rmse <- kfold_pred_df %>% 
+    summarize(rmse_mdl1 = calc_rmse(model1,o2sat),
+              rmse_mdl2 = calc_rmse(model2,o2sat))
+  
+  #everytime it goes through the loop it will add a new row with outputs
+  rmse_df <- bind_rows(rmse_df, kfold_rmse)
+}
+
+
+#dont compare within each of the folds, we want to compare overall
+
+rmse_df %>% 
+  summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
+            mean_rmse_mdl2 = mean(rmse_mdl2))
+
+# model 1= 289.7196	model 2 =287.8213	model3= 292.0715	
+#So it looks like model 2 has the lowest RMSE (error)
+
+
+
+```
+
+
+
+***
+
+## X. Data Citation
+
+Data citation: CalCOFI data are available for use without restriction. Data downloaded from https://calcofi.org/ccdata.html.  Accessed 1/10/2022.
+
