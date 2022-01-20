@@ -72,7 +72,8 @@ graph1 <- ggplot(data = sierra_count, aes(x=survey_date, y= total_count, fill= a
   scale_color_manual(values = c("skyblue1","slateblue1","royalblue4")) +
   facet_wrap(~ amphibian_life_stage) +
   theme_minimal() +
-  scale_fill_discrete(name = "Life Stage")
+  scale_fill_discrete(name = "Life Stage") +
+  scale_fill_manual(values = c("dodgerblue1", "mediumaquamarine", "darkorchid3"))
 
 graph1
 ```
@@ -117,7 +118,8 @@ graph2 <- ggplot(data = sierra_top5, aes(x= fct_reorder(lake_id, total_count), y
   #coord_flip() + #flips so columns go from vertical alignment to horizontal alginment
   theme_minimal() +
   theme(legend.position = "none") +
-  labs(x = "Lake ID", y = "Total Count", title = "Lakes with Top 5 Combined Adult and Subadult Rana Muscosa Counts", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project")
+  labs(x = "Lake ID", y = "Total Count", title = "Lakes with Top 5 Combined Adult and Subadult Rana Muscosa Counts", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project") +
+  scale_fill_manual(values = c("slategrey", "steelblue4", "slateblue", "steelblue3", "slateblue4"))
 
 graph2
 ```
@@ -139,7 +141,8 @@ graph3 <- graph1 <- ggplot(data = sierra_count, aes(x=survey_date, y= total_coun
   scale_color_manual(values = c("skyblue1","slateblue1","royalblue4")) +
   #facet_wrap(~ amphibian_life_stage) +
   theme_minimal() +
-  scale_fill_discrete(name = "Life Stage")
+  scale_fill_discrete(name = "Life Stage") +
+  scale_fill_manual(values = c("dodgerblue1", "mediumaquamarine", "darkorchid3"))
 
 # NOTE: I am keeping the cord flip here as to allow space to see the full lake ID without them getting compressed
 # I acknolege that changing the "total count" from vertical to hortizontal is not quite ideal
@@ -149,7 +152,8 @@ graph4 <- ggplot(data = sierra_top5, aes(x= fct_reorder(lake_id, total_count), y
   coord_flip() + #flips so columns go from vertical alignment to horizontal alginment
   theme_minimal() +
   theme(legend.position = "none") +
-  labs(x = "Lake ID", y = "Total Count", title = "Top Lakes Adult/Subadult Pop.", subtitle = "Data from: Knapp, R.A. 2020.")
+  labs(x = "Lake ID", y = "Total Count", title = "Top Lakes Adult/Subadult Pop.", subtitle = "Data from: Knapp, R.A. 2020.") +
+  scale_fill_manual(values = c("slategrey", "steelblue4", "slateblue", "steelblue3", "slateblue4"))
 
 
 plot_grid(graph3, graph4, labels = c("A.", "B."), label_size = 20)
