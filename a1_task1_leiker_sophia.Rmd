@@ -142,7 +142,9 @@ graph3 <- graph1 <- ggplot(data = sierra_count, aes(x=survey_date, y= total_coun
   #facet_wrap(~ amphibian_life_stage) +
   theme_minimal() +
   scale_fill_discrete(name = "Life Stage") +
-  scale_fill_manual(values = c("dodgerblue1", "mediumaquamarine", "darkorchid3"))
+  scale_fill_manual(values = c("dodgerblue1", "mediumaquamarine", "darkorchid3")) +
+  theme(legend.position = "top") +
+  theme(legend.title = element_blank())
 
 # NOTE: I am keeping the cord flip here as to allow space to see the full lake ID without them getting compressed
 # I acknolege that changing the "total count" from vertical to hortizontal is not quite ideal
