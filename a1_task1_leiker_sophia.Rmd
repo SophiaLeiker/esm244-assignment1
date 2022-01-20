@@ -12,6 +12,8 @@ library(tidyverse)
 library(here)
 library(janitor)
 library(lubridate)
+library(patchwork)
+library(cowplot)
 ```
 
 ## 1. Introduction
@@ -62,16 +64,21 @@ sierra_count <- sierra_yellow %>%
 ```
 
 ## C. Data visualization
-- SOPHIA TRY AND RECOLOR THESE ULGY COLORS
 
 ```{r}
-ggplot(data = sierra_count, aes(x=survey_date, y= total_count, fill= amphibian_life_stage)) +
+graph1 <- ggplot(data = sierra_count, aes(x=survey_date, y= total_count, fill= amphibian_life_stage)) +
   geom_col() +
   labs(x = "Year", y = "Total Count", title = "Amphibian Life Stage for Rana Muscosa in Sierra Lakes Inventory Project", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project") +
   scale_color_manual(values = c("skyblue1","slateblue1","royalblue4")) +
   facet_wrap(~ amphibian_life_stage) +
-  theme_minimal()
+  theme_minimal() +
+  scale_fill_discrete(name = "Life Stage")
+
+graph1
 ```
+
+**Figure 1**. Amphibian life stage of Rana Muscosa from 1995 to 2002 broken down by life stage
+
 ***
 
 # Part 2
@@ -103,21 +110,56 @@ sierra_top5[5, "lake_id"] <- "Lake 50219"
 ```
 
 ## B. Data Visualization
-- SOPHIA SHORTEN TITLE
-- SOPHIA SEE HOW TO CHANGE THE COLORS
 ```{r}
-ggplot(data = sierra_top5, aes(x= fct_reorder(lake_id, total_count), y = total_count)) + 
+graph2 <- ggplot(data = sierra_top5, aes(x= fct_reorder(lake_id, total_count), y = total_count)) + 
   geom_col(aes(fill = lake_id)) + 
   labs(x = 'Lake ID', y = 'Total Count') +
   #coord_flip() + #flips so columns go from vertical alignment to horizontal alginment
   theme_minimal() +
-  labs(x = "Total Count", y = "Lake ID", title = "Combined Adult and Subadult Rana Muscosa in Lakes with Top 5 Total Observed Counts", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project")
+  theme(legend.position = "none") +
+  labs(x = "Lake ID", y = "Total Count", title = "Lakes with Top 5 Combined Adult and Subadult Rana Muscosa Counts", subtitle = "Data from: Knapp, R.A. 2020. The Sierra Lakes Inventory Project")
+
+graph2
 ```
 
+**Figure 2**. Lakes from The Sierra Lakes Inventory Project the with Top 5 Total Observed Counts of Combined Adult and Subadult Rana Muscosa
+
+***
+
+# Part 3 : Combine Graphs!
+- Using `cowplot` to combine graph 1 and graph 2
+
+## Assessment of Rana Muscosa Across by Life Stage, Year and Lake
+
+```{r}
+#editing graphs to change the placement of things and remove subtitles 
+graph3 <- graph1 <- ggplot(data = sierra_count, aes(x=survey_date, y= total_count, fill= amphibian_life_stage)) +
+  geom_col() +
+  labs(x = "Year", y = "Total Count", title = "Rana Muscosa Life Stage by Year", subtitle = "Data from: Knapp, R.A. 2020.") +
+  scale_color_manual(values = c("skyblue1","slateblue1","royalblue4")) +
+  #facet_wrap(~ amphibian_life_stage) +
+  theme_minimal() +
+  scale_fill_discrete(name = "Life Stage")
+
+# NOTE: I am keeping the cord flip here as to allow space to see the full lake ID without them getting compressed
+# I acknolege that changing the "total count" from vertical to hortizontal is not quite ideal
+graph4 <- ggplot(data = sierra_top5, aes(x= fct_reorder(lake_id, total_count), y = total_count)) + 
+  geom_col(aes(fill = lake_id)) + 
+  labs(x = 'Lake ID', y = 'Total Count') +
+  coord_flip() + #flips so columns go from vertical alignment to horizontal alginment
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(x = "Lake ID", y = "Total Count", title = "Top Lakes Adult/Subadult Pop.", subtitle = "Data from: Knapp, R.A. 2020.")
+
+
+plot_grid(graph3, graph4, labels = c("A.", "B."), label_size = 20)
+```
+
+**Figure 3: ** **Plot A** on the left illustrates the distribution of Rana Muscosa by life stage in in Sierra Lakes Inventory Project. Blue indicates Rana Muscosa at the tadpole lifestage, green indicating the SubAdult lifestage, and red/orange in the adult lifestage. **Plot B** on the right illustrates the lakes with top 5 counts of Rana Muscosa using the metric of combined adult and subadult populations
 
 
 ***
 
-## X. Data Citation
+## 4. Data Citation
 
 Knapp, R.A., C. Pavelka, E.E. Hegeman, and T.C. Smith. 2020. The Sierra Lakes Inventory Project: Non-Native fish and community composition of lakes and ponds in the Sierra Nevada, California ver 2. Environmental Data Initiative. https://doi.org/10.6073/pasta/d835832d7fd00d9e4466e44eea87fab3
