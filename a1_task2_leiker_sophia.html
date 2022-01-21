@@ -383,11 +383,11 @@ rmse_predict_test &lt;- predict_test %&gt;%
             rmse_mdl2 = calc_rmse(model2, o2sat))
 
 #Let&#39;s create a table
-kbl(rmse_predict_test, caption = &quot;Table 2: Model 1 and Model 2RMSE Value Outputs&quot;) %&gt;% 
+kbl(rmse_predict_test, caption = &quot;Table 2: Model 1 and Model 2 RMSE Value Outputs&quot;) %&gt;% 
   kable_styling(c(&quot;striped&quot;), full_width = FALSE)</code></pre>
 <table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <caption>
-Table 2: Model 1 and Model 2RMSE Value Outputs
+Table 2: Model 1 and Model 2 RMSE Value Outputs
 </caption>
 <thead>
 <tr>
@@ -413,10 +413,6 @@ rmse_mdl2
 </div>
 <div id="c.-calculating-over-all-the-folds-and-taking-the-average" class="section level3">
 <h3>C. Calculating over all the folds and taking the average</h3>
-</div>
-</div>
-<div id="sophia-things-stop-working-here" class="section level2">
-<h2>SOPHIA THINGS STOP WORKING HERE!!!!</h2>
 <pre class="r"><code># Creating a blank data frame
 rmse_df &lt;- data.frame()
 
@@ -432,10 +428,10 @@ for(i in 1:folds) {
   
   kfold_pred_df &lt;- kfold_test_df %&gt;% 
     mutate(mdl1 = predict(kfold_mdl1, kfold_test_df),
-           mdl2 = predict(kfold_mdl2, .))
+           mdl2 = predict(kfold_mdl2, kfold_test_df))
   kfold_rmse &lt;- kfold_pred_df %&gt;% 
-    summarize(rmse_mdl1 = calc_rmse(model1,o2sat),
-              rmse_mdl2 = calc_rmse(model2,o2sat))
+    summarize(rmse_mdl1 = calc_rmse(mdl1,o2sat),
+              rmse_mdl2 = calc_rmse(mdl2,o2sat))
   
   #everytime it goes through the loop it will add a new row with outputs
   rmse_df &lt;- bind_rows(rmse_df, kfold_rmse)
@@ -446,14 +442,12 @@ for(i in 1:folds) {
 
 rmse_df %&gt;% 
   summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
-            mean_rmse_mdl2 = mean(rmse_mdl2))
-
-# model 1= 289.7196 model 2 =287.8213   model3= 292.0715    
-#So it looks like model 2 has the lowest RMSE (error)</code></pre>
+            mean_rmse_mdl2 = mean(rmse_mdl2))</code></pre>
 <hr />
 </div>
-<div id="x.-data-citation" class="section level2">
-<h2>X. Data Citation</h2>
+</div>
+<div id="d.-data-citation" class="section level2">
+<h2>D. Data Citation</h2>
 <p>Data citation: CalCOFI data are available for use without restriction. Data downloaded from <a href="https://calcofi.org/ccdata.html" class="uri">https://calcofi.org/ccdata.html</a>. Accessed 1/10/2022.</p>
 </div>
 
