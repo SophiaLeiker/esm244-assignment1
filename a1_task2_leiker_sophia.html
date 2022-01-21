@@ -180,7 +180,8 @@ library(AICcmodavg)
 library(equatiomatic)
 library(janitor)
 library(here)
-library(kableExtra)</code></pre>
+library(kableExtra)
+library(stargazer)</code></pre>
 <div id="introduction" class="section level2">
 <h2>1. Introduction</h2>
 <p>This report will read in a small subset of seawater sample data from CalCOFI, then compare the performance of two competing linear regression models that predict oxygen saturation based on several physical and chemical variables, using AIC and cross validation.</p>
@@ -223,7 +224,8 @@ AICc_model1 &lt;- AICcmodavg::AICc(model1)
 AICc_model2 &lt;- AICcmodavg::AICc(model2)
 
 #this gives us a model summary and ranks them in order of preference
-table1 &lt;- AICcmodavg::aictab(list(model1, model2))
+table1 &lt;- AICcmodavg::aictab(list(model1, model2)) %&gt;% 
+  rename(&quot;Model Names&quot; = &quot;Modnames&quot;)
 
 #Let&#39;s create a table
 kbl(table1, caption = &quot;Table 1: Model 1 and Model 2 AIC Outputs&quot;) %&gt;% 
@@ -237,7 +239,7 @@ Table 1: Model 1 and Model 2 AIC Outputs
 <th style="text-align:left;">
 </th>
 <th style="text-align:left;">
-Modnames
+Model Names
 </th>
 <th style="text-align:right;">
 K
@@ -379,8 +381,10 @@ predict_test &lt;- test_df %&gt;%
          model2 = predict(training_mdl2, test_df))
 
 rmse_predict_test &lt;- predict_test %&gt;% 
-  summarize(rmse_mdl1 = calc_rmse(model1, o2sat),
-            rmse_mdl2 = calc_rmse(model2, o2sat))
+  summarize(rmse_mdl1 = round(calc_rmse(model1, o2sat),3),
+            rmse_mdl2 = round(calc_rmse(model2, o2sat),3)) %&gt;% 
+  rename(&quot;RMSE Model 1&quot; = &quot;rmse_mdl1&quot;) %&gt;% 
+  rename(&quot;RMSE Model 2&quot; = &quot;rmse_mdl2&quot;)
 
 #Let&#39;s create a table
 kbl(rmse_predict_test, caption = &quot;Table 2: Model 1 and Model 2 RMSE Value Outputs&quot;) %&gt;% 
@@ -392,20 +396,20 @@ Table 2: Model 1 and Model 2 RMSE Value Outputs
 <thead>
 <tr>
 <th style="text-align:right;">
-rmse_mdl1
+RMSE Model 1
 </th>
 <th style="text-align:right;">
-rmse_mdl2
+RMSE Model 2
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:right;">
-8.859422
+8.859
 </td>
 <td style="text-align:right;">
-9.497512
+9.498
 </td>
 </tr>
 </tbody>
@@ -440,15 +444,45 @@ for(i in 1:folds) {
 
 #dont compare within each of the folds, we want to compare overall
 
-rmse_df %&gt;% 
-  summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
-            mean_rmse_mdl2 = mean(rmse_mdl2))</code></pre>
-<hr />
+rmse_table &lt;- rmse_df %&gt;% 
+  summarize(Mean_RMSE_Model_1 = round(mean(rmse_mdl1),3),
+            Mean_RMSE_Model_2 = round(mean(rmse_mdl2),3)) %&gt;% 
+  rename(&quot;Mean RMSE Model 1&quot; = &quot;Mean_RMSE_Model_1&quot;) %&gt;% 
+  rename(&quot;Mean RMSE Model 2&quot; = &quot;Mean_RMSE_Model_2&quot;)
+
+#Let&#39;s create a table
+kbl(rmse_table, caption = &quot;Table 3: Average RMSE Outputs for Model 1 and 2&quot;) %&gt;% 
+  kable_styling(c(&quot;striped&quot;), full_width = FALSE)
+
+model_1_output &lt;- rmse_table[1,1]
+model_2_output &lt;- rmse_table[1,2]</code></pre>
+<p>Based on the average RMSE values, <strong>Model 2 is the better performing model</strong>.</p>
 </div>
+</div>
+<div id="final-model" class="section level2">
+<h2>4. Final Model</h2>
+<p>Given that <strong>Model 2</strong> was the better performing model when assessed through <code>AICc</code> as well as <code>Average RMSE</code>, <strong>Model 2 is the model that will be chosen for analysis</strong></p>
+<pre class="r"><code>final_model &lt;- lm(f2, data = samples)</code></pre>
+<p><strong>Final Model Equation</strong>: <span class="math display">\[
+\begin{aligned}
+\operatorname{o2sat} &amp;= \alpha + \beta_{1}(\operatorname{t\_deg\_c}) + \beta_{2}(\operatorname{salinity}) + \beta_{3}(\operatorname{po4u\_m})\ + \\
+&amp;\quad \beta_{4}(\operatorname{depth\_m}) + \epsilon
+\end{aligned}
+\]</span></p>
+<p><strong>With coefficients included</strong>: <span class="math display">\[
+\begin{aligned}
+\operatorname{\widehat{o2sat}} &amp;= 144.07 - 0.75(\operatorname{t\_deg\_c}) - 0.44(\operatorname{salinity}) - 37.71(\operatorname{po4u\_m})\ - \\
+&amp;\quad 0.03(\operatorname{depth\_m})
+\end{aligned}
+\]</span></p>
+<hr />
 </div>
 <div id="d.-data-citation" class="section level2">
 <h2>D. Data Citation</h2>
 <p>Data citation: CalCOFI data are available for use without restriction. Data downloaded from <a href="https://calcofi.org/ccdata.html" class="uri">https://calcofi.org/ccdata.html</a>. Accessed 1/10/2022.</p>
+</div>
+<div id="end-task" class="section level2">
+<h2>END TASK</h2>
 </div>
 
 

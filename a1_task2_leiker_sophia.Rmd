@@ -14,6 +14,7 @@ library(equatiomatic)
 library(janitor)
 library(here)
 library(kableExtra)
+library(stargazer)
 ```
 
 ## 1. Introduction
@@ -73,7 +74,8 @@ AICc_model1 <- AICcmodavg::AICc(model1)
 AICc_model2 <- AICcmodavg::AICc(model2)
 
 #this gives us a model summary and ranks them in order of preference
-table1 <- AICcmodavg::aictab(list(model1, model2))
+table1 <- AICcmodavg::aictab(list(model1, model2)) %>% 
+  rename("Model Names" = "Modnames")
 
 #Let's create a table
 kbl(table1, caption = "Table 1: Model 1 and Model 2 AIC Outputs") %>% 
@@ -143,8 +145,10 @@ predict_test <- test_df %>%
          model2 = predict(training_mdl2, test_df))
 
 rmse_predict_test <- predict_test %>% 
-  summarize(rmse_mdl1 = calc_rmse(model1, o2sat),
-            rmse_mdl2 = calc_rmse(model2, o2sat))
+  summarize(rmse_mdl1 = round(calc_rmse(model1, o2sat),3),
+            rmse_mdl2 = round(calc_rmse(model2, o2sat),3)) %>% 
+  rename("RMSE Model 1" = "rmse_mdl1") %>% 
+  rename("RMSE Model 2" = "rmse_mdl2")
 
 #Let's create a table
 kbl(rmse_predict_test, caption = "Table 2: Model 1 and Model 2 RMSE Value Outputs") %>% 
@@ -183,11 +187,38 @@ for(i in 1:folds) {
 
 #dont compare within each of the folds, we want to compare overall
 
-rmse_df %>% 
-  summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
-            mean_rmse_mdl2 = mean(rmse_mdl2))
+rmse_table <- rmse_df %>% 
+  summarize(Mean_RMSE_Model_1 = round(mean(rmse_mdl1),3),
+            Mean_RMSE_Model_2 = round(mean(rmse_mdl2),3)) %>% 
+  rename("Mean RMSE Model 1" = "Mean_RMSE_Model_1") %>% 
+  rename("Mean RMSE Model 2" = "Mean_RMSE_Model_2")
+
+#Let's create a table
+kbl(rmse_table, caption = "Table 3: Average RMSE Outputs for Model 1 and 2") %>% 
+  kable_styling(c("striped"), full_width = FALSE)
+
+model_1_output <- rmse_table[1,1]
+model_2_output <- rmse_table[1,2]
 
 ```
+
+Based on the average RMSE values, **Model 2 is the better performing model**.
+
+
+## 4. Final Model
+
+Given that **Model 2** was the better performing model when assessed through `AICc` as well as `Average RMSE`, **Model 2 is the model that will be chosen for analysis**
+
+```{r}
+final_model <- lm(f2, data = samples)
+```
+
+
+**Final Model Equation**:
+`r equatiomatic::extract_eq(final_model, wrap = TRUE)`
+
+**With coefficients included**:
+`r equatiomatic::extract_eq(final_model, wrap = TRUE, use_coefs = TRUE)`
 
 
 
@@ -196,4 +227,6 @@ rmse_df %>%
 ## D. Data Citation
 
 Data citation: CalCOFI data are available for use without restriction. Data downloaded from https://calcofi.org/ccdata.html.  Accessed 1/10/2022.
+
+## END TASK
 
